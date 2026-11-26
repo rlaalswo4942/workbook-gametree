@@ -644,7 +644,7 @@ async function decodeShare(code) {
 // OpenAI와 같은 형식의 주소를 쓴다. 정확도를 위해 temperature를 낮추고, JSON이 필요한 곳은 JSON 모드로 받는다(못 쓰는 모델이면 JSON 모드 없이 한 번 더).
 const BASE = "https://generativelanguage.googleapis.com/v1beta/openai";
 const HOST = "generativelanguage.googleapis.com";
-const BAD_KEY = "API 키가 맞지 않아요. Gemini 키(AIza로 시작)를 다시 복사해 넣으세요.";
+const BAD_KEY = "API 키가 맞지 않아요. Google AI Studio에서 받은 Gemini 키를 다시 복사해 넣으세요.";
 const TIMEOUT_S = 60;
 const TEMPERATURE = 0.2;
 
@@ -797,7 +797,8 @@ function boot() {
     e.preventDefault();
     const key = keyM.querySelector("input[type=password]").value.trim(), persist = keyM.querySelector("[data-persist]").checked;
     if (!key) return toast("키를 붙여 넣어 주세요");
-    if (!/^AIza/.test(key)) return toast("Gemini 키(AIza로 시작)만 쓸 수 있어요. Google AI Studio에서 받은 키를 넣어 주세요");
+    // 앞부분으로 거르지 않는다: Gemini 키 형식이 AIza만은 아니어서, 맞는지는 Gemini에 직접 물어 확인한다.
+    if (/^(gsk_|xai-|grok_|sk-)/i.test(key)) return toast("다른 회사(Groq·Grok·OpenAI) 키예요. Google AI Studio에서 받은 Gemini 키를 넣어 주세요");
     const probe = { key, model: ai.model }, btn = keyM.querySelector("[type=submit]");
     ai.checking = true; paintKey(); btn.disabled = true;
     try {
