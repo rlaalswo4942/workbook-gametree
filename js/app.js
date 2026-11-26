@@ -2,7 +2,7 @@
 // 워크북 게임트리 — 연관검색어처럼 골라 가며, 무대에서 직접 실험하고 내 웹 게임을 만드는 미션 웹앱.
 // 화면 틀·저장·동기화·검색은 스터디_프레임 엔진(css/style.css, js/store.js, js/search.js)을 그대로 쓴다.
 // 과정(따라 하기·과제·제출 체크리스트)은 각자 PC의 워크북 원문 파일을 그대로 읽어 보여 준다 — 평가 기준과 어긋나지 않게, 공개 사이트에 강의 자료를 싣지 않게.
-// 각자 본인 AI 키(Groq·Gemini 무료, Grok 유료)를 넣어 쓴다. API 키와 워크북 원문은 이 기기에만 두고 동기화하지 않는다.
+// 각자 본인 Gemini 키(무료)를 넣어 쓴다. API 키와 워크북 원문은 이 기기에만 두고 동기화하지 않는다.
 
 // ================= 미션 = 워크북 3~8장 =================
 const CH_TITLE = { 3: "Canvas 게임화면 그리기", 4: "게임루프 움직이게 하기", 5: "입력처리 조작하기", 6: "충돌 점수 승패", 7: "디버깅과 코드읽기", 8: "게임답게 만들기", 9: "플레이테스트와 개선" };
@@ -105,21 +105,14 @@ const nodeId = (genre, k, choice) => `${genre}›${k}›${choice}`;
 const hash = (s) => { let h = 2166136261; for (const c of String(s)) h = Math.imul(h ^ c.codePointAt(0), 16777619); return h >>> 0; };
 const nextList = (n) => (n.k < 6 ? FIXED_NEXT[n.k + 1] || n.next || [] : []);
 
-// AI 회사: 키 앞부분으로 고른다. 셋 다 OpenAI와 같은 형식이고 브라우저 호출(CORS)을 허용한다(2026-11-26 확인).
-// pref = 모델 시도 순서: 정확한 큰 모델 먼저(속도보다 정확도). 목록은 바뀔 수 있어 순서만 정하고, 되는지는 호출해서 확인한다.
-const PROVIDERS = {
-  groq: { name: "Groq", base: "https://api.groq.com/openai/v1", host: "api.groq.com", keyHint: "gsk_로 시작",
-    pref: [/gpt-oss-120b/, /llama-3\.3-70b/, /qwen/, /llama-4-maverick/, /kimi/, /llama-4/, /gpt-oss-20b/] },
-  gemini: { name: "Gemini", base: "https://generativelanguage.googleapis.com/v1beta/openai", host: "generativelanguage.googleapis.com", keyHint: "AIza로 시작",
-    pref: [/^gemini-[\d.]+-pro$/, /^gemini-[\d.]+-flash$/, /^gemini-[\d.]+-pro/, /^gemini-[\d.]+-flash(?!-lite)/, /^gemini-.*flash-lite/] },
-  xai: { name: "Grok", base: "https://api.x.ai/v1", host: "api.x.ai", keyHint: "xai- 또는 grok_로 시작",
-    pref: [/^grok-4(?!.*(image|vision))/, /^grok-3(?!-mini)/, /^grok-3-mini/, /^grok/] },
-};
-const providerOf = (key) => (/^AIza/.test(key) ? PROVIDERS.gemini : /^(xai-|grok_)/i.test(key) ? PROVIDERS.xai : PROVIDERS.groq);
-function rankModels(models, pref = PROVIDERS.groq.pref) {
-  const ok = models.filter((m) => !/whisper|tts|guard|orpheus|playai|compound|allam|distil|embed|image|imagen|veo|vision|audio|live|aqa/.test(m));
-  const score = (m) => { const i = pref.findIndex((re) => re.test(m)); return i < 0 ? pref.length : i; };
-  return ok.sort((a, b) => score(a) - score(b) || a.localeCompare(b)).filter((m) => score(m) < pref.length || /llama|gpt|qwen|mistral|gemma|gemini|grok/.test(m));
+// Gemini 모델 시도 순서: 정확한 큰 모델 먼저(속도보다 정확도). 음성·이미지·임베딩 모델은 뺀다.
+// 목록은 바뀔 수 있어 순서만 정하고, 되는지는 호출해서 확인한다.
+// (Groq는 학교 네트워크에서 가입이 signup_blocked로 막히고 Grok은 유료라 2026-11-26 뺐다.)
+const MODEL_PREF = [/^gemini-[\d.]+-pro$/, /^gemini-[\d.]+-flash$/, /^gemini-[\d.]+-pro/, /^gemini-[\d.]+-flash(?!-lite)/, /^gemini-.*flash-lite/];
+function rankModels(models) {
+  const ok = models.filter((m) => /^gemini/.test(m) && !/embed|tts|image|audio|live|aqa|robotics|computer-use/.test(m));
+  const score = (m) => { const i = MODEL_PREF.findIndex((re) => re.test(m)); return i < 0 ? MODEL_PREF.length : i; };
+  return ok.sort((a, b) => score(a) - score(b) || b.localeCompare(a)); // 같은 순위면 최신 버전 먼저
 }
 
 const parseJson = (t) => JSON.parse(String(t).replace(/^\s*```(?:json)?\s*/i, "").replace(/\s*```\s*$/, ""));
@@ -647,21 +640,22 @@ async function decodeShare(code) {
   return { S: parseImport(JSON.stringify(d)), at: String(d.at || "") };
 }
 
-// ================= AI 호출 (Groq 무료 · Gemini 무료 · Grok 유료, 본인 키) =================
-// 정확도를 위해 temperature를 낮추고, JSON이 필요한 곳은 JSON 모드로 받는다(못 쓰는 모델이면 JSON 모드 없이 한 번 더).
-const TIMEOUT_S = 40;
+// ================= Gemini (무료 · 구글 계정만 · 브라우저에서 바로 호출 가능) =================
+// OpenAI와 같은 형식의 주소를 쓴다. 정확도를 위해 temperature를 낮추고, JSON이 필요한 곳은 JSON 모드로 받는다(못 쓰는 모델이면 JSON 모드 없이 한 번 더).
+const BASE = "https://generativelanguage.googleapis.com/v1beta/openai";
+const HOST = "generativelanguage.googleapis.com";
+const BAD_KEY = "API 키가 맞지 않아요. Gemini 키(AIza로 시작)를 다시 복사해 넣으세요.";
+const TIMEOUT_S = 60;
 const TEMPERATURE = 0.2;
 
 function requestBody(model, system, user, json) {
-  const b = { model, messages: [{ role: "system", content: system }, { role: "user", content: user }], temperature: TEMPERATURE, max_tokens: /gemini/.test(model) ? 8192 : 4096 };
+  const b = { model, messages: [{ role: "system", content: system }, { role: "user", content: user }], temperature: TEMPERATURE, max_tokens: 8192 };
   if (json) b.response_format = { type: "json_object" };
-  if (/gpt-oss/.test(model)) b.reasoning_effort = "medium"; // 생각하는 모델: 너무 오래 생각하지 않게
-  if (/gemini-[\d.]+-(pro|flash)/.test(model)) b.reasoning_effort = "low";
+  if (/gemini-[\d.]+-(pro|flash)/.test(model)) b.reasoning_effort = "low"; // 생각하는 모델: 너무 오래 생각하지 않게
   return JSON.stringify(b);
 }
 
 async function callModel(key, model, body) {
-  const P = providerOf(key), BASE = P.base;
   const ac = new AbortController(), timer = setTimeout(() => ac.abort(), TIMEOUT_S * 1000);
   try {
     const r = await fetch(`${BASE}/chat/completions`, {
@@ -673,23 +667,22 @@ async function callModel(key, model, body) {
       return text ? { text } : { retry: true, status: "empty", why: "빈 응답" };
     }
     const msg = String(j.error?.message || "").slice(0, 160);
-    if (r.status === 401 || (r.status === 400 && /api.?key/i.test(msg))) return { err: `API 키가 맞지 않아요. ${P.name} 키(${P.keyHint})를 다시 복사해 넣으세요.` };
-    if (r.status === 403) return { err: `이 키로는 쓸 수 없어요.${P === PROVIDERS.xai ? " Grok은 유료라 크레딧 충전이 필요해요." : ""} (${msg})` };
-    const why = { 404: "없는 모델", 429: "이 모델 한도 초과", 413: "요청이 너무 큼", 498: "용량 부족", 500: "서버 오류", 502: "서버 오류", 503: "붐빔" }[r.status] || `${r.status} ${msg}`;
+    if (r.status === 401 || (r.status === 400 && /api.?key/i.test(msg))) return { err: BAD_KEY };
+    if (r.status === 403) return { err: `이 키로는 쓸 수 없어요. (${msg})` };
+    const why = { 404: "없는 모델", 429: "이 모델 한도 초과", 413: "요청이 너무 큼", 500: "서버 오류", 502: "서버 오류", 503: "붐빔" }[r.status] || `${r.status} ${msg}`;
     return { retry: true, status: r.status, why }; // 400(모델이 JSON 모드를 못 씀 등)도 다음 모델로
   } catch (e) {
     if (e.name === "AbortError") return { retry: true, status: "timeout", why: `${TIMEOUT_S}초 동안 응답 없음` };
-    return { err: `${P.name}에 접속하지 못했어요. 인터넷 연결이나 학교 방화벽(${P.host})을 확인하세요.` };
+    return { err: `Gemini에 접속하지 못했어요. 인터넷 연결이나 학교 방화벽(${HOST})을 확인하세요.` };
   } finally { clearTimeout(timer); }
 }
 
 async function listModels(key) {
-  const P = providerOf(key);
   let r;
-  try { r = await fetch(`${P.base}/models`, { headers: { Authorization: `Bearer ${key}` } }); }
-  catch (e) { throw new Error(`${P.name}에 접속하지 못했어요. 인터넷 연결이나 학교 방화벽(${P.host})을 확인하세요.`); }
+  try { r = await fetch(`${BASE}/models`, { headers: { Authorization: `Bearer ${key}` } }); }
+  catch (e) { throw new Error(`Gemini에 접속하지 못했어요. 인터넷 연결이나 학교 방화벽(${HOST})을 확인하세요.`); }
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error([400, 401, 403].includes(r.status) ? `API 키가 맞지 않아요. ${P.name} 키(${P.keyHint})를 다시 복사해 넣으세요.` : `모델 목록을 못 불러왔어요 (${r.status}).`);
+  if (!r.ok) throw new Error([400, 401, 403].includes(r.status) ? BAD_KEY : `모델 목록을 못 불러왔어요 (${r.status}).`);
   return (j.data || []).filter((m) => m.active !== false).map((m) => String(m.id).replace(/^models\//, ""));
 }
 
@@ -699,7 +692,7 @@ async function askAI(ai, system, user, json, log = () => {}) {
   let queue = ai.model ? [ai.model] : [];
   const tried = new Set(), fails = [];
   while (tried.size < 5) {
-    if (!queue.length) { log("📋 쓸 수 있는 모델 확인 중…"); queue = rankModels(await listModels(ai.key), providerOf(ai.key).pref).filter((m) => !tried.has(m)); }
+    if (!queue.length) { log("📋 쓸 수 있는 모델 확인 중…"); queue = rankModels(await listModels(ai.key)).filter((m) => !tried.has(m)); }
     const model = queue.shift();
     if (!model) break;
     tried.add(model);
@@ -744,7 +737,7 @@ function boot() {
   };
   const LS = (() => { try { return localStorage; } catch (e) { return null; } })();
   const SS = (() => { try { return sessionStorage; } catch (e) { return null; } })();
-  const ai = { key: raw.get(SS, "gt-groq-key") || raw.get(LS, "gt-groq-key") || "", model: raw.get(LS, "gt-groq-model") || "", checking: false };
+  const ai = { key: raw.get(SS, "gt-gemini-key") || raw.get(LS, "gt-gemini-key") || "", model: raw.get(LS, "gt-gemini-model") || "", checking: false };
   let WB = {};
   try { WB = JSON.parse(raw.get(LS, "gt-wb") || "{}"); } catch (e) {}
   let CH = {}, COMMON = null; // 워크북에서 읽은 장별 따라 하기·과제·제출 체크리스트
@@ -778,7 +771,7 @@ function boot() {
     const t0 = Date.now(), lines = [];
     const draw = () => { runbox.hidden = false; runbox.textContent = `⏳ ${title} · ${Math.round((Date.now() - t0) / 1000)}초\n${lines.slice(-4).join("\n")}`; };
     const timer = setInterval(draw, 1000); draw();
-    try { const r = await fn((m) => { lines.push(m); draw(); }); raw.set(LS, "gt-groq-model", ai.model); paintKey(); return r; }
+    try { const r = await fn((m) => { lines.push(m); draw(); }); raw.set(LS, "gt-gemini-model", ai.model); paintKey(); return r; }
     finally { busy = false; clearInterval(timer); runbox.hidden = true; }
   }
   const fail = (e) => toast("❌ " + e.message);
@@ -798,20 +791,20 @@ function boot() {
     keyBtn.className = "icon-btn " + (ai.checking ? "wait" : ai.key ? "ok" : "no");
     keyBtn.textContent = ai.checking ? "키 확인 중" : ai.key ? (ai.model ? ai.model.replace(/^[\w-]+\//, "") : "연결됨") : "API 키 넣기";
   }
-  function openKey() { keyM.querySelector("input[type=password]").value = ai.key; keyM.querySelector("[data-persist]").checked = !!raw.get(LS, "gt-groq-key"); open(keyM); setTimeout(() => keyM.querySelector("input[type=password]").focus({ preventScroll: true }), 50); }
+  function openKey() { keyM.querySelector("input[type=password]").value = ai.key; keyM.querySelector("[data-persist]").checked = !!raw.get(LS, "gt-gemini-key"); open(keyM); setTimeout(() => keyM.querySelector("input[type=password]").focus({ preventScroll: true }), 50); }
   keyBtn.onclick = openKey;
   keyM.querySelector("form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const key = keyM.querySelector("input[type=password]").value.trim(), persist = keyM.querySelector("[data-persist]").checked;
     if (!key) return toast("키를 붙여 넣어 주세요");
-    if (!/^(gsk_|AIza|xai-|grok_)/i.test(key)) return toast("Groq(gsk_)·Gemini(AIza)·Grok(xai-, grok_) 키만 쓸 수 있어요. 키를 다시 복사해 주세요");
-    const probe = { key, model: ai.key && providerOf(ai.key) === providerOf(key) ? ai.model : "" }, btn = keyM.querySelector("[type=submit]");
+    if (!/^AIza/.test(key)) return toast("Gemini 키(AIza로 시작)만 쓸 수 있어요. Google AI Studio에서 받은 키를 넣어 주세요");
+    const probe = { key, model: ai.model }, btn = keyM.querySelector("[type=submit]");
     ai.checking = true; paintKey(); btn.disabled = true;
     try {
       await run("키 확인 중", (log) => askAI(probe, "한 단어로 답한다.", "ping", false, log));
-      ai.key = key; ai.model = probe.model; raw.set(LS, "gt-groq-model", ai.model);
-      raw.set(SS, "gt-groq-key", key); raw.set(LS, "gt-groq-key", persist ? key : null);
-      close(keyM); toast(`${providerOf(key).name} 연결됐어요 (모델: ${ai.model})`); route();
+      ai.key = key; ai.model = probe.model; raw.set(LS, "gt-gemini-model", ai.model);
+      raw.set(SS, "gt-gemini-key", key); raw.set(LS, "gt-gemini-key", persist ? key : null);
+      close(keyM); toast(`Gemini 연결됐어요 (모델: ${ai.model})`); route();
     } catch (err) { fail(err); }
     finally { ai.checking = false; btn.disabled = false; paintKey(); }
   });
