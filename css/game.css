@@ -1,0 +1,172 @@
+/* 게임트리 전용 — 스터디_프레임 style.css 위에 얹는다 (프레임 변수·무채색 디자인 그대로 사용) */
+
+/* 목차: 갈래 들여쓰기 */
+.side-item.d2 { padding-left: 22px; } .side-item.d3 { padding-left: 32px; } .side-item.d4 { padding-left: 42px; } .side-item.d5, .side-item.d6 { padding-left: 50px; }
+.side-item.full .mini-bar i { background: var(--ink); }
+
+/* 위쪽: 미니맵 + 키 */
+.minimap { border: 0; background: transparent; padding: 2px; border-radius: 10px; line-height: 0; cursor: pointer; flex: none; }
+.minimap canvas { width: 140px; height: 36px; border-radius: 8px; display: block; background: #f5f5f7; }
+.minimap:hover canvas { box-shadow: 0 0 0 1.5px var(--ink); }
+#keyBtn { white-space: nowrap; }
+#keyBtn.ok::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #34c759; margin-right: 6px; }
+#keyBtn.wait::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #ff9f0a; margin-right: 6px; }
+#keyBtn.no::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #ff3b30; margin-right: 6px; }
+
+/* 연관 검색어: 검색창 + 칩 */
+.dock { display: flex; flex-direction: column; gap: 12px; }
+.gsearch { position: relative; }
+.gsearch input { width: 100%; height: 54px; border: 1px solid var(--line); border-radius: 980px; padding: 0 22px; font: inherit; font-size: 17px; background: var(--panel); color: var(--ink); }
+.gsearch input:focus { outline: none; border-color: var(--ink); }
+.suggest { position: absolute; left: 0; right: 0; top: calc(100% + 6px); margin: 0; padding: 6px 0; list-style: none; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 12px 32px rgba(0, 0, 0, .12); max-height: 50vh; overflow: auto; z-index: 20; }
+.suggest li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 22px; cursor: pointer; font-size: 15px; }
+.suggest li:hover, .suggest li.on { background: var(--bg); }
+.suggest li .s { color: var(--sub); font-size: 13px; white-space: nowrap; }
+.suggest li.ai b { font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chips .lbl { font-size: 13px; font-weight: 600; color: var(--sub); margin-right: 4px; }
+.chip { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 980px; padding: 7px 15px; font-size: 14px; cursor: pointer; white-space: nowrap; }
+.chip:hover { border-color: var(--ink); }
+.chip.done { border-color: var(--ink); }
+.chip.done::before { content: "✓ "; }
+.chip.ready { background: var(--ink); color: #fff; border-color: var(--ink); }
+.chip.ready::before { content: "⚡ "; }
+.chip.loading { border-style: dashed; border-color: #8e8e93; }
+.chip.loading::before { content: "… "; }
+.chip.ghost { border-style: dashed; color: var(--sub); }
+.chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+.chip.wrap { white-space: normal; text-align: left; }
+
+/* 무대 카드 */
+.stage-card { padding: 18px 20px; }
+.stage-card > h2 { justify-content: space-between; flex-wrap: wrap; }
+.stage-btns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; font-weight: 500; }
+.stage-btns button, .lab-bar button { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 980px; padding: 6px 13px; font-size: 13.5px; cursor: pointer; }
+.stage-btns button:hover:not(:disabled), .lab-bar button:hover { border-color: var(--ink); }
+.stage-btns button.on, .lab-bar button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+.stage-btns button:disabled { opacity: .4; cursor: default; }
+.stage-btns .s { color: var(--sub); margin-left: 6px; }
+#stage { display: block; width: 100%; max-height: 66vh; aspect-ratio: 4 / 3; object-fit: contain; background: #111216; border-radius: 12px; margin: 10px 0; touch-action: none; }
+#stage:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.lab-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.lab-bar:empty { display: none; }
+.lab-bar .nm { font-weight: 700; font-size: 14px; margin-right: 4px; }
+.lab-bar .slider { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; }
+.lab-bar .slider input { width: 140px; accent-color: #1d1d1f; }
+.lab-bar .s { color: var(--sub); font-size: 13px; }
+.bug-quiz { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--bg); }
+.stage-note { color: var(--sub); font-size: 14px; margin-top: 8px; min-height: 1.4em; }
+
+/* 체크리스트: 자동 체크 항목은 누를 수 없음 */
+.ck.auto { cursor: default; }
+.ck.auto:hover { background: transparent; }
+.ck .tag { margin-left: auto; font-size: 11.5px; color: var(--sub); border: 1px solid var(--line); border-radius: 980px; padding: 1px 8px; flex: none; }
+.checklist.one { grid-template-columns: 1fr; }
+
+/* 프롬프트 조립기 */
+.composer .lb { font-size: 12.5px; font-weight: 600; color: var(--sub); margin: 12px 0 6px; }
+.composer .base { background: var(--bg); border-radius: 12px; padding: 10px 14px; font-size: 15px; }
+.composer .out { border-left: 3px solid var(--ink); background: var(--bg); border-radius: 0 12px 12px 0; padding: 12px 16px; font-size: 15px; }
+.composer .chips .chip { font-size: 13.5px; }
+.card .acts-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+.card .note { color: var(--sub); font-size: 13px; margin: 10px 0 0; }
+
+/* 이해 확인 */
+.quiz-q { font-weight: 600; font-size: 16.5px; margin: 0 0 10px; }
+.quiz-opts { display: flex; flex-direction: column; gap: 8px; }
+.quiz-opts button { text-align: left; border: 1px solid var(--line); background: var(--panel); border-radius: 12px; padding: 11px 14px; font: inherit; font-size: 15px; cursor: pointer; color: var(--ink); }
+.quiz-opts button:hover:not(:disabled) { border-color: var(--ink); }
+.quiz-opts button.right { border-color: var(--ok); background: #eaf7ef; }
+.quiz-opts button.wrong { border-color: #ff3b30; background: #fdeeee; }
+.quiz-fb { margin: 10px 0 0; font-weight: 600; }
+.quiz-fb.ok { color: var(--ok); } .quiz-fb.no { color: #d70015; }
+
+/* 막혔어요 */
+.hint { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+.hint .q { font-weight: 600; margin-bottom: 6px; }
+.hint .a { white-space: pre-wrap; font-size: 15px; }
+.hint .t { color: var(--sub); font-size: 12px; margin-top: 6px; }
+.card textarea, .modal textarea { width: 100%; font: inherit; font-size: 15px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; resize: vertical; background: var(--panel); color: var(--ink); }
+
+/* 미션 히어로: 진행 링이 차면 살짝 튐 */
+.hero.party .ring { animation: ringpop .5s ease 2; }
+@keyframes ringpop { 50% { transform: scale(1.12); } }
+.hero .meta { color: var(--sub); font-size: 14px; margin-top: 6px; }
+.route { margin: 6px 0 0; padding-left: 20px; } .route li { margin: 6px 0; } .route .s { color: var(--sub); font-size: 13.5px; }
+.deeper { margin-top: 18px; text-align: center; }
+.deeper button { border: 0; background: none; color: var(--ink); text-decoration: underline; font: inherit; font-size: 14px; cursor: pointer; }
+.banner { background: var(--panel); border-radius: var(--radius); padding: 14px 18px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+
+/* 창(모달) */
+.modal .box.wide { width: min(1100px, 100%); max-height: 90vh; display: flex; flex-direction: column; }
+.modal .row { display: flex; gap: 8px; align-items: baseline; }
+.modal .steps-ol { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.7; }
+.modal .fields { display: grid; gap: 10px; }
+.modal .fields label { display: grid; gap: 4px; font-size: 13px; color: var(--sub); font-weight: 600; }
+.modal .fields input { width: 100%; }
+.map-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.map-head h3 { margin-right: auto; }
+.map-genres { display: flex; flex-wrap: wrap; gap: 6px; }
+.big-map { overflow: auto; border-radius: 14px; background: var(--bg); min-height: 120px; margin-top: 4px; }
+.big-map svg { display: block; }
+.info-body { overflow: auto; font-size: 15px; line-height: 1.7; }
+.info-body pre { background: var(--bg); padding: 10px; border-radius: 10px; overflow-x: auto; white-space: pre-wrap; }
+.info-body table { border-collapse: collapse; } .info-body td, .info-body th { border: 1px solid var(--line); padding: 4px 8px; }
+.edge { fill: none; stroke: #c7c7cc; stroke-width: 2; }
+.pill-n { cursor: pointer; }
+.pill-n rect.bg { fill: var(--panel); stroke: #d2d2d7; }
+.pill-n text { fill: var(--ink); font-size: 14px; font-family: inherit; }
+.pill-n.root rect.bg { stroke: var(--ink); stroke-width: 1.5; }
+.pill-n.ghost rect.bg { fill: transparent; stroke: #aeaeb2; stroke-dasharray: 5 4; }
+.pill-n.ghost text { fill: var(--sub); }
+.pill-n.ghost.ready rect.bg { fill: #ececf0; stroke: var(--ink); stroke-dasharray: none; }
+.pill-n.here rect.bg { fill: var(--ink); stroke: var(--ink); }
+.pill-n.here text { fill: #fff; font-weight: 700; }
+.pill-n rect.bar-bg { fill: #e5e5ea; } .pill-n rect.bar { fill: var(--ink); }
+.pill-n.here rect.bar-bg { fill: #48484a; } .pill-n.here rect.bar { fill: #fff; }
+.pill-n:hover rect.bg, .pill-n:focus rect.bg { stroke: var(--ink); stroke-width: 2; }
+.pill-n:focus { outline: none; }
+
+/* 생성 진행 상황 */
+#runbox { position: fixed; right: 18px; top: 64px; z-index: 96; max-width: min(400px, calc(100vw - 36px)); white-space: pre-line; background: rgba(29, 29, 31, .92); color: #fff; border-radius: 16px; padding: 12px 16px; font-size: 13.5px; line-height: 1.6; box-shadow: 0 10px 30px rgba(0, 0, 0, .2); }
+
+@media (max-width: 700px) {
+  .minimap canvas { width: 96px; height: 28px; }
+  #keyBtn { font-size: 12.5px; padding: 0 8px; }
+  .gsearch input { height: 48px; font-size: 16px; }
+}
+
+/* 화면 밖에 숨어 있는 프레임 검색 사이드바 때문에 문서가 옆으로 넓어지지 않게 자른다 (입력칸에 초점이 갈 때 화면이 옆으로 밀리던 문제) */
+#app { position: relative; overflow: hidden; }
+#topbar .icon-btn { white-space: nowrap; flex: none; }
+
+/* 워크북 원문 표시 (따라 하기 · 과제 · 제출 체크리스트) */
+.wbmd { font-size: 15.5px; line-height: 1.7; }
+.wbmd pre { background: #f5f5f7; border-radius: 12px; padding: 12px 14px; overflow-x: auto; white-space: pre-wrap; font-size: 14px; margin: 0 0 12px; }
+.wbmd code { font-family: ui-monospace, Consolas, monospace; }
+.wbmd :not(pre) > code { background: #f0f0f3; border-radius: 5px; padding: 1px 5px; font-size: .92em; }
+.wbmd blockquote { margin: 10px 0; padding: 8px 14px; border-left: 3px solid #d2d2d7; color: #424245; }
+.wbmd table { border-collapse: collapse; margin: 8px 0; font-size: 14px; } .wbmd th, .wbmd td { border: 1px solid var(--line); padding: 5px 9px; text-align: left; } .wbmd th { background: #f5f5f7; }
+.wbmd ul { padding-left: 22px; } .wbmd li.task { list-style: none; margin-left: -20px; }
+.wbmd li.task input { width: 18px; height: 18px; margin-right: 8px; vertical-align: -3px; accent-color: #1d1d1f; cursor: pointer; }
+.wbmd li.task.on { color: var(--sub); text-decoration: line-through; text-decoration-color: rgba(0, 0, 0, .25); }
+.pre-bar { display: flex; gap: 6px; justify-content: flex-end; margin: 4px 0 4px; }
+.pre-bar button { border: 1px solid var(--line); background: var(--panel); border-radius: 980px; padding: 4px 12px; font-size: 12.5px; cursor: pointer; color: var(--ink); }
+.pre-bar button:hover { border-color: var(--ink); }
+.mine-box { border: 1.5px solid var(--ink); border-radius: 14px; padding: 10px 12px; margin: -4px 0 14px; }
+.mine-box .lbl { font-size: 12.5px; font-weight: 600; color: var(--sub); margin-bottom: 6px; }
+.mine-box pre { background: #fff; margin: 0; }
+.mine-pick { background: #f5f5f7; border-radius: 10px; padding: 4px 8px; }
+.badge { display: inline-block; background: var(--ink); color: #fff; border-radius: 980px; font-size: 11.5px; font-weight: 700; padding: 1px 9px; margin-right: 8px; vertical-align: 1px; }
+.task-sec { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 14px; }
+.task-sec:first-of-type { border-top: 0; margin-top: 0; padding-top: 0; }
+.task-sec > h3 { font-size: 18px; margin: 0 0 8px; }
+.card .sec { box-shadow: none; background: #fafafc; margin-top: 12px; }
+.card .sec-head h3 { font-size: 19px; }
+.rec { margin-top: 10px; }
+.rec .lbl { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.fake-console { background: #1e1e1e; color: #ff8a80; font: 13px ui-monospace, Consolas, monospace; border-radius: 10px; padding: 8px 12px; margin: 8px 0 0; white-space: pre-wrap; }
+.bug-quiz input { flex: 1 1 220px; min-width: 0; height: 34px; border: 1px solid var(--line); border-radius: 10px; padding: 0 10px; font: inherit; font-size: 14px; }
+.bug-quiz ol { margin: 0; padding-left: 20px; width: 100%; font-size: 14px; }
+.notice.warn { background: #fff8e6; border: 1px solid #f5d48a; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 0 0 16px; }
+.side-item.warn small { color: #c2410c; }

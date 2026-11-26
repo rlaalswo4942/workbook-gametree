@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f5f5f7">
+<meta name="description" content="연관검색어처럼 골라 가며, 무대에서 직접 실험하고 내 웹 게임을 만드는 바이브코딩 미션">
+<title>워크북 게임트리</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%AE%3C/text%3E%3C/svg%3E">
+<!-- css/style.css · js/store.js · js/search.js 는 스터디_프레임 엔진 파일 그대로 (고치지 않음) -->
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="side-head"><b>목차</b><button class="icon-btn" id="side-close" title="목차 닫기">✕</button></div>
+    <nav id="side-nav"></nav>
+    <div class="side-foot">
+      <span id="sync-state"></span>
+      <button id="btn-sync" class="primary" title="같은 코드를 입력한 기기끼리 미션 기록을 실시간 공유">동기화 설정</button>
+      <button id="btn-export" title="미션 기록을 파일로 저장">백업 저장</button>
+      <button id="btn-import" title="백업 파일에서 불러오기">백업 불러오기</button>
+      <button id="btn-md" title="과제용: 미션 기록과 조립한 프롬프트를 md로 내려받기">과제 기록 md</button>
+      <input type="file" id="file-import" accept=".json,application/json" hidden>
+    </div>
+  </aside>
+  <div id="center">
+    <header id="topbar">
+      <button class="icon-btn" id="side-toggle" title="목차 열기/닫기">☰</button>
+      <div class="crumb" id="crumb"></div>
+      <button id="minimap" class="minimap" type="button" title="경로 지도 크게 보기" aria-label="경로 지도 크게 보기"><canvas width="280" height="72"></canvas></button>
+      <button class="icon-btn" id="keyBtn" type="button" title="Groq API 키">API 키</button>
+      <button class="icon-btn" onclick="location.hash='#/'" title="홈">홈</button>
+    </header>
+    <main id="main"></main>
+  </div>
+</div>
+
+<div id="sync-modal" class="modal">
+  <form class="box" autocomplete="off">
+    <h3>기기 간 실시간 동기화</h3>
+    <p class="state"></p>
+    <p>학교 PC·노트북·태블릿 등 <b>모든 기기에 같은 동기화 코드</b>를 입력하면 미션 기록(체크·실험·퀴즈·힌트)이 몇 초 안에 공유됩니다. 처음이면 새 코드를 정해서 입력하세요.</p>
+    <input type="password" minlength="6" placeholder="동기화 코드 (6자 이상, 나만 아는 문구)" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <p class="small">코드는 비밀번호처럼 다루세요. 서버에는 코드 대신 암호화된 해시만 전달됩니다. Groq API 키와 워크북 원문은 동기화하지 않아요.</p>
+    <div class="acts"><button type="button" class="ghost" data-off>동기화 끄기</button><span></span><button type="button" class="ghost" data-close>닫기</button><button type="submit">연결</button></div>
+  </form>
+</div>
+
+<div id="key-modal" class="modal">
+  <form class="box" autocomplete="off">
+    <h3>Groq API 키 넣기</h3>
+    <p>처음 한 번만 하면 돼요. 키는 무료이고 카드 등록이 필요 없어요.</p>
+    <ol class="steps-ol">
+      <li><a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq 키 페이지 열기</a> → 본인 구글 또는 GitHub 계정으로 로그인</li>
+      <li><b>Create API Key</b> → 이름은 아무거나(예: workbook) → 만들어진 키(<b>gsk_</b>로 시작) 복사 — 이 화면을 닫으면 다시 볼 수 없어요</li>
+      <li>아래 칸에 붙여 넣고 <b>확인하고 저장</b></li>
+    </ol>
+    <input type="password" placeholder="gsk_…" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="API 키">
+    <label class="small row"><input type="checkbox" data-persist> 이 PC에 키 저장 (개인 PC만. 학교·공용 PC면 끈 채로 — 창을 닫으면 지워져요)</label>
+    <p class="small">키를 코드·GitHub·단톡방에 올리지 마세요. 무료 한도는 모델마다 하루 약 1,000번이에요. AI에게 보내는 글에는 개인정보를 넣지 마세요.</p>
+    <div class="acts"><span></span><button type="button" class="ghost" data-close>나중에</button><button type="submit">확인하고 저장</button></div>
+  </form>
+</div>
+
+<div id="text-modal" class="modal">
+  <form class="box" autocomplete="off">
+    <h3></h3>
+    <div class="fields"></div>
+    <div class="acts"><span></span><button type="button" class="ghost" data-close>취소</button><button type="submit"></button></div>
+  </form>
+</div>
+
+<div id="map-modal" class="modal">
+  <div class="box wide">
+    <div class="map-head"><h3>경로 지도</h3><div class="map-genres"></div><button type="button" class="icon-btn" data-close aria-label="닫기">✕</button></div>
+    <p class="small">눌러서 이동해요. 점선은 아직 안 고른 연관 검색어 — 누르면 그 방향으로 다음 미션을 만들어요.</p>
+    <div class="big-map"></div>
+  </div>
+</div>
+
+<div id="info-modal" class="modal">
+  <div class="box wide">
+    <div class="map-head"><h3></h3><button type="button" class="icon-btn" data-close aria-label="닫기">✕</button></div>
+    <div class="info-body"></div>
+  </div>
+</div>
+
+<div id="runbox" role="status" aria-live="polite" hidden></div>
+<div id="toast"></div>
+<input type="file" id="wb-pick" webkitdirectory multiple hidden>
+
+<script>
+  // 스터디_프레임 엔진(store.js·search.js)이 읽는 설정. key는 이 사이트 전용 — 다른 학습 사이트와 기록이 섞이지 않음
+  window.SITE = { title: "워크북 게임트리", key: "workbook-gametree", syncApi: "https://ai-hackathon-sync.vercel.app/api/state" };
+</script>
+<script src="vendor/marked.min.js"></script>
+<script src="vendor/purify.min.js"></script>
+<script src="js/store.js"></script>
+<script src="js/app.js"></script>
+<script src="js/search.js"></script>
+</body>
+</html>
