@@ -8,12 +8,12 @@
 const CH_TITLE = { 3: "Canvas 게임화면 그리기", 4: "게임루프 움직이게 하기", 5: "입력처리 조작하기", 6: "충돌 점수 승패", 7: "디버깅과 코드읽기", 8: "게임답게 만들기", 9: "플레이테스트와 개선" };
 // [이름, 워크북 장, 이 미션에서 할 일, '더 깊게'로 볼 개념 섹션(null이면 조작 방식에 따라)]
 const STEPS = [
-  ["화면", 3, "Canvas로 내 게임의 첫 화면 그리기 (아직 안 움직여도 됨)", [["2.2", "Canvas — 도화지 한 장"], ["2.3", "좌표계 — 이번 주에서 가장 중요한 것"]]],
+  ["화면", 3, "Canvas로 내 게임의 첫 화면 그리기 (아직 안 움직여도 됨)", [["2.2", "Canvas — 도화지 한 장"], ["2.3", "좌표계 — 이번 주에서 가장 중요한 것"], ["2.4", "그리는 명령 — 읽을 수만 있으면 된다"], ["2.6", "게임 기획서 쓰는 법"]]],
   ["움직임", 4, "게임 루프로 내 게임의 무언가가 스스로 움직이게 하기", [["2.4", "속도 = 한 프레임에 더하는 값"], ["2.5", "게임 루프 — 심장"]]],
   ["조작", 5, "키보드나 마우스로 플레이어 조작하기 (방식 B)", null],
   ["규칙", 6, "충돌·점수·게임 오버로 처음부터 끝까지 플레이 가능한 최소 버전", [["2.5", "충돌 판정 — 부딪혔는지 계산으로 알아낸다"], ["2.7", "점수와 게임 오버 조건"]]],
-  ["디버깅", 7, "에러·조용한 버그를 찾고 디버그 표시(showDebug) 붙이기", [["2.5", "조용한 버그 — 에러가 없는데 이상할 때"], ["2.8", "다섯 단계 디버깅 절차"]]],
-  ["게임답게", 8, "시작 화면·효과음·난이도 상승·최고 점수 중 두 가지 이상", [["2.3", "화면 전환 — 상태를 하나 더 늘린다"], ["2.4", "난이도 곡선 — 점점 조여 온다"]]],
+  ["디버깅", 7, "에러·조용한 버그를 찾고 디버그 표시(showDebug) 붙이기", [["2.5", "조용한 버그 — 에러가 없는데 이상할 때"], ["2.6", "AI에게 버그를 설명하는 법"], ["2.8", "다섯 단계 디버깅 절차"]]],
+  ["게임답게", 8, "시작 화면·효과음·난이도 상승·최고 점수 중 두 가지 이상", [["2.3", "화면 전환 — 상태를 하나 더 늘린다"], ["2.4", "난이도 곡선 — 점점 조여 온다"], ["2.6", "무료 에셋과 저작권"]]],
 ];
 const INPUT_SECTIONS = {
   key: [["2.4", "두 가지 조작 방식 — 이번 주의 핵심"], ["2.5", "화면 밖으로 나가지 않게 막기"]],
@@ -394,12 +394,14 @@ function parseCommon(md) {
   return { key: "e", title: "제출 전 공통 체크리스트 (부록 E.5)", md: md2, tasks: taskTexts(md2) };
 }
 
+// 원문에 체크박스가 없는 필수 과제는 진행률에 안 잡혀 빠뜨리기 쉽다 → '과제 N 마침' 항목을 붙인다
+const needsDone = (t) => /필수/.test(t.title) && !t.tasks.length;
 // ---- 미션 진행: 실험(자동) + 워크북 체크 항목(따라 하기·과제·제출·공통) + 이해 확인 ----
 function missionItems(n, chapter, common, features) {
   const done = n.done || {}, labs = n.labs || {}, out = labAutos(n, features).map(([key, lbl]) => ({ key: `lab:${key}`, label: lbl, kind: "lab", ok: !!labs[key] }));
   const add = (sec, kind) => sec && sec.tasks.forEach((t, i) => out.push({ key: `${sec.key}:${i}`, label: t, kind, sec: sec.title, ok: !!done[`${sec.key}:${i}`] }));
   // 스터디_프레임의 섹션 '읽음'처럼 Step마다 '마침' 항목 하나 + 원문의 체크박스들
-  if (chapter) { chapter.steps.forEach((s) => { out.push({ key: `${s.key}:done`, label: `${s.title.replace(/\s*\(\d+분\).*$/, "")} 마침`, kind: "stepdone", sec: "따라 하기 실습", ok: !!done[`${s.key}:done`] }); add(s, "step"); }); chapter.tasks.forEach((t) => add(t, "task")); add(chapter.submit, "submit"); }
+  if (chapter) { chapter.steps.forEach((s) => { out.push({ key: `${s.key}:done`, label: `${s.title.replace(/\s*\(\d+분\).*$/, "")} 마침`, kind: "stepdone", sec: "따라 하기 실습", ok: !!done[`${s.key}:done`] }); add(s, "step"); }); chapter.tasks.forEach((t) => { if (needsDone(t)) out.push({ key: `${t.key}:done`, label: `${t.title.replace(/\s*\(.*$/, "")} 마침`, kind: "taskdone", sec: "내 게임에 적용하기", ok: !!done[`${t.key}:done`] }); add(t, "task"); }); add(chapter.submit, "submit"); }
   add(common, "common");
   out.push({ key: "quiz", label: "이해 확인 문제를 맞혔다", kind: "quiz", ok: n.quizPick === QUIZ[n.k].answer });
   return out;
@@ -541,6 +543,7 @@ function recordTables(n) {
   if (n.k === 4 && ((v.tune || []).length || (v.runs || []).length)) out.push({ title: "과제 2. 난이도 조정 기록 — 바꾼 값", md: ["| 바꾼 것 | 전 | 후 | 이유 |", "|---|---|---|---|", ...(v.tune || []).map((t) => `| ${t.what} | ${t.before} | ${t.after} |  |`), "", `내가 한 판에 버틴 시간: ${(v.runs || []).map((s) => s + "초").join(", ") || "-"}`].join("\n") });
   if (n.k === 6 && (v.runs || []).length) out.push({ title: "과제 3. 난이도 체감 기록 — 내가 버틴 시간", md: ["| 시점 | 내 체감 | 조정한 것 |", "|---|---|---|", "| 0~10초 |  |  |", "| 30초 |  |  |", "| 1분 이후 |  |  |", "", `내가 버틴 최고 기록: ${Math.max(...v.runs)}초`].join("\n") });
   if (n.k === 5 && (v.hunt || []).some(Boolean)) out.push({ title: "과제 1 재료. 숨은 버그 찾기에서 내가 적은 것", md: v.hunt.map((x, i) => `${i + 1}) ${x || "(못 찾음)"}`).join("\n") });
+  if ((v.copied || []).length) out.push({ title: "회고 1번 재료. 이 미션에서 복사한 요청 — 실제로 보낸 문장으로 고치고, '왜 이렇게 요청했는가'는 직접 써요", md: v.copied.map((c, i) => `${i + 1})\n\n\`\`\`\n${c}\n\`\`\`\n\n왜 이렇게 요청했는가: `).join("\n\n") });
   return out;
 }
 
@@ -559,7 +562,8 @@ function buildExport(S, chapters = {}, common = null, now = new Date()) {
       let sec = "";
       for (const it of items) { const s = it.sec || (it.kind === "lab" ? "실험실" : it.kind === "quiz" ? "이해 확인" : ""); if (s !== sec) { out.push(``, `**${s}**`); sec = s; } out.push(`- [${it.ok ? "x" : " "}] ${it.label}`); }
       for (const t of recordTables(n)) out.push(``, `**${t.title}**`, ``, t.md);
-      for (const h of n.hints || []) out.push(``, `질문 (${h.at}): ${h.q}`, ``, h.a.split("\n").map((l) => "> " + l).join("\n"));
+      for (const [k, m] of Object.entries((n.vals || {}).memo || {})) if (m.trim()) out.push(``, `**과제 메모 (${k})**`, ``, m);
+      for (const h of n.hints || []) out.push(``, h.a ? `질문 (${h.at}): ${h.q}` : `막힌 점 메모 (${h.at}): ${h.q}`, ...(h.a ? [``, h.a.split("\n").map((l) => "> " + l).join("\n")] : []));
       out.push(``);
     }
   }
@@ -580,6 +584,8 @@ function cleanVals(v) {
     tune: (Array.isArray(v.tune) ? v.tune : []).slice(0, 30).map((t) => ({ what: oneLine(t && t.what).slice(0, 30), before: oneLine(t && t.before).slice(0, 20), after: oneLine(t && t.after).slice(0, 20) })),
     hunt: (Array.isArray(v.hunt) ? v.hunt : []).slice(0, 3).map((s) => String(s || "").slice(0, 300)),
     huntChecked: !!v.huntChecked,
+    copied: (Array.isArray(v.copied) ? v.copied : []).slice(-30).map((s) => String(s || "").slice(0, 4000)),
+    memo: Object.fromEntries(Object.entries(v.memo && typeof v.memo === "object" ? v.memo : {}).slice(0, 20).filter(([k]) => /^[\w:.-]{1,20}$/.test(k)).map(([k, s]) => [k, String(s || "").slice(0, 4000)])),
   };
 }
 const boolMap = (o, max = 300) => Object.fromEntries(Object.entries(o && typeof o === "object" ? o : {}).slice(0, max).filter(([k]) => /^[\w:]{1,30}$/.test(k)).map(([k, v]) => [k, !!v]));
@@ -1373,7 +1379,11 @@ function boot() {
     });
     box.querySelectorAll("pre").forEach((pre, i) => {
       const code = pre.textContent.replace(/\n$/, ""), pkey = `${sec.key}.${i}`, mine = n.vals.personal?.[pkey];
-      const bar = h("div", { class: "pre-bar" }, h("button", { type: "button", onclick: () => copy(code, "원문 요청을 복사했어요") }, "복사"));
+      const bar = h("div", { class: "pre-bar" }, h("button", { type: "button", onclick: () => {
+        copy(code, "원문 요청을 복사했어요 — 회고 1번 재료로 과제 칸에 모아 둬요");
+        const c = n.vals.copied || (n.vals.copied = []); // 회고 '핵심 프롬프트' 재료: 복사한 요청을 모은다
+        if (!ro && !c.includes(code)) { c.push(code); if (c.length > 30) c.shift(); saveNode(n); refreshPage(); }
+      } }, "복사"));
       if (PERSONAL_RE.test(code) && !ro) bar.append(h("button", { type: "button", onclick: () => personalize(n, pkey, code) }, mine ? "내 게임 버전 다시 만들기" : "내 게임 버전 만들기 (AI)"));
       pre.before(bar);
       if (mine) pre.after(h("div", { class: "mine-box" }, h("div", { class: "lbl" }, "내 게임 버전 — 괄호·예시 자리만 바꿨고, 나머지 줄은 원문 그대로인지 검사했어요"), h("pre", {}, mine), h("div", { class: "pre-bar" }, h("button", { type: "button", onclick: () => copy(mine, "내 게임 버전을 복사했어요. VS Code AI에게 붙여 넣으세요") }, "복사"))));
@@ -1470,9 +1480,26 @@ function boot() {
           } }, isDone ? "✓ 마침" : "마침")),
           wbSection(n, s, ro, { mark: markChoice(n, s) }));
       })) : wbMissing(ch);
-    const tasksCard = chap ? card("tasks", "내 게임에 적용하기 (과제)", `워크북 ${ch}장 4절 원문`, ...chap.tasks.map((t) => h("div", { class: "task-sec" }, h("h3", {}, t.title), wbSection(n, t, ro, { mark: markChoice(n, t) }))),
-      tables.length ? h("div", { class: "task-sec" }, h("h3", {}, "회고 재료 — 실험실에서 시도한 값"), h("p", { class: "note" }, "값만 채웠어요. 느낌·판단·이유는 직접 써요 (회고는 본인이 씀)."), ...tables) : null) : null;
-    const submitCard = chap ? card("submit", "제출 체크리스트", `워크북 ${ch}장 5절 · 부록 E.5`, wbSection(n, chap.submit, ro), COMMON ? h("div", { class: "task-sec" }, h("h3", {}, COMMON.title), wbSection(n, COMMON, ro)) : h("p", { class: "note" }, "부록 E 파일도 같은 폴더에 있으면 공통 체크리스트가 함께 보여요.")) : null;
+    // 체크박스 없는 필수 과제: '마침' 버튼 + 학생이 직접 쓰는 메모 칸(플레이테스트·버그 해결 과정·비교 글 재료). 내보내기에 들어간다
+    const taskDone = (t) => {
+      if (!needsDone(t)) return null;
+      const dk = `${t.key}:done`, isDone = !!n.done[dk];
+      const memo = h("textarea", { rows: 3, disabled: ro, placeholder: "이 과제에서 한 일·관찰한 것을 직접 적어 두는 메모 (내보내기 파일에 들어가요)" }, (n.vals.memo || {})[t.key] || "");
+      memo.addEventListener("change", () => { (n.vals.memo || (n.vals.memo = {}))[t.key] = memo.value; saveNode(n); toast("메모를 저장했어요"); });
+      return h("div", { class: "task-memo" }, memo, h("div", { class: "acts-row" }, h("button", { class: "done-btn", disabled: ro, onclick: () => {
+        const was = (() => { const pp = progress(itemsOf(n)); return pp.done === pp.total; })();
+        n.done[dk] = !isDone; saveNode(n); refreshPage();
+        const pp = progress(itemsOf(n)); if (!was && pp.done === pp.total) celebrate(n);
+      } }, isDone ? "✓ 과제 마침" : "과제 마침")));
+    };
+    const tasksCard = chap ? card("tasks", "내 게임에 적용하기 (과제)", `워크북 ${ch}장 4절 원문`, ...chap.tasks.map((t) => h("div", { class: "task-sec" }, h("h3", {}, t.title), wbSection(n, t, ro, { mark: markChoice(n, t) }), taskDone(t))),
+      tables.length ? h("div", { class: "task-sec" }, h("h3", {}, "회고 재료"), h("p", { class: "note" }, "실험실 값·복사한 요청만 모았어요. 느낌·판단·이유는 직접 써요 (회고는 본인이 씀)."), ...tables) : null) : null;
+    // 원문 5절 뒤 '다음 주 예고'(다음 장에서 쓰는 안내가 있음)와 부록 E 기준(제출물·회고 양식·루브릭·감점)을 원문 그대로 접어서 보여 준다
+    const nextWeek = WB[ch] ? extractSection(WB[ch], "다음 주 예고") : "";
+    const eSec = (num, title) => { const md = WB.E ? extractSection(WB.E, num) : ""; return md ? h("details", {}, h("summary", {}, title), mdToEl(md), num === "E.2" ? h("div", { class: "pre-bar" }, h("button", { type: "button", onclick: () => copy(md.replace(/^#+.*\n/, ""), "회고 양식을 복사했어요. 내용은 직접 써요") }, "회고 양식 복사")) : null) : null; };
+    const submitCard = chap ? card("submit", "제출 체크리스트", `워크북 ${ch}장 5절 · 부록 E.5`, wbSection(n, chap.submit, ro), COMMON ? h("div", { class: "task-sec" }, h("h3", {}, COMMON.title), wbSection(n, COMMON, ro)) : h("p", { class: "note" }, "부록 E 파일도 같은 폴더에 있으면 공통 체크리스트가 함께 보여요."),
+      nextWeek ? h("div", { class: "task-sec" }, h("h3", {}, "다음 주 예고 (원문)"), mdToEl(nextWeek.replace(/^#+.*\n/, ""))) : null,
+      WB.E ? h("div", { class: "task-sec" }, h("h3", {}, "부록 E 기준 (원문)"), eSec("E.1", "E.1 제출물 구성"), eSec("E.2", "E.2 회고 파일 양식"), eSec("E.3", "E.3 주차별 평가 루브릭 (20점)"), eSec("E.4", "E.4 감점과 부정행위")) : null) : null;
     // 이해 확인 (워크북 본문 그대로)
     const Qz = QUIZ[n.k], order = Qz.options.map((_, i) => i).sort((a, b) => hash(n.id + a) - hash(n.id + b)), picked = n.quizPick, okPick = picked === Qz.answer;
     const quizCard = card("quiz", "이해 확인", `워크북 ${ch}장 본문`, h("p", { class: "quiz-q" }, Qz.q),
@@ -1487,10 +1514,12 @@ function boot() {
     fill(main, h("div", { class: "home mission" },
       ro ? h("div", { class: "banner" }, h("span", {}, "공유받은 경로를 보는 중이에요."), h("button", { class: "pill", onclick: takeShared }, "내 기록에 담고 이어 하기")) : null,
       hero, stageCard,
-      card("labs", "실험 체크리스트", `${LABS[n.k].ref} · 무대에서 해 보면 자동 체크`, h("p", { class: "note", style: "margin:0 0 8px" }, LABS[n.k].tip), h("div", { class: "checklist" }, its.filter((i) => i.kind === "lab").map(ckEl))),
+      card("labs", "실험 체크리스트", `${LABS[n.k].ref} · 무대에서 해 보면 자동 체크`, h("p", { class: "note", style: "margin:0 0 8px" }, LABS[n.k].tip), n.k === 2 ? h("p", { class: "note", style: "margin:0 0 8px" }, "실험실에서 해 본 값은 VS Code의 내 script.js에서도 같은 줄을 직접 고쳐 봐요 — 워크북 실험은 AI 없이 내 코드를 손으로 고치는 게 핵심이에요.") : null, h("div", { class: "checklist" }, its.filter((i) => i.kind === "lab").map(ckEl))),
       stepsCard, tasksCard, quizCard, submitCard,
-      ro ? null : card("hint", "막혔어요", n.hints.length ? `${n.hints.length}개 기록` : "AI 조교에게 묻기 · 7장 2.8 절차대로", ...n.hints.map((x) => h("div", { class: "hint" }, h("div", { class: "q" }, x.q), h("div", { class: "a" }, x.a), h("div", { class: "t" }, x.at))),
-        qBox, h("div", { class: "acts-row" }, h("button", { class: "pill", onclick: () => askHint(n, qBox.value.trim()) }, "물어보기"))),
+      ro ? null : card("hint", "막혔어요", n.hints.length ? `${n.hints.length}개 기록 · 회고 2번 재료` : "메모로 남기거나 AI 조교에게 묻기 · 회고 2번 재료", ...n.hints.map((x) => h("div", { class: "hint" }, h("div", { class: "q" }, x.q), x.a ? h("div", { class: "a" }, x.a) : null, h("div", { class: "t" }, x.a ? x.at : `${x.at} · 메모`))),
+        qBox, h("div", { class: "acts-row" },
+          h("button", { class: "pill ghost", onclick: () => { const q = qBox.value.trim(); if (!q) return toast("막힌 점을 먼저 적어 주세요"); n.hints.push({ q, a: "", at: new Date().toLocaleString("ko-KR") }); saveNode(n); refreshPage(); toast("메모로 남겼어요 (내보내기에 들어가요)"); } }, "메모로 남기기 (키 없이)"),
+          h("button", { class: "pill", onclick: () => askHint(n, qBox.value.trim()) }, "AI에게 물어보기"))),
       ro ? null : n.k < 6
         ? card("next", `다음 미션 · 미션 ${n.k + 1} ${STEPS[n.k][0]}`, `워크북 ${STEPS[n.k][1]}장${FIXED_NEXT[n.k + 1] ? " · 워크북이 정해 둔 선택지" : ""}`, h("p", { class: "note", style: "margin:0 0 12px" }, `${STEPS[n.k][2]}. ${FIXED_NEXT[n.k + 1] ? "워크북에 나온 선택지 중에서 골라요." : "연관 검색어를 고르거나 검색해요."} 마우스를 올려 두면 미리 만들어 둬요.`), dock)
         : card("next", "완주", "6개 미션", h("p", {}, "이제 워크북 9장 플레이테스트로 가요. 왼쪽 메뉴의 '경로 지도'에서 다른 갈래도 골라 볼 수 있어요.")),
