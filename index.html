@@ -52,9 +52,12 @@
   <form class="box" autocomplete="off">
     <h3>Groq API 키 넣기</h3>
     <p>처음 한 번만 하면 돼요. 키는 무료이고 카드 등록이 필요 없어요.</p>
+    <p class="small"><b>주의:</b> <b>Groq</b>(끝이 q, groq.com)예요. 이름이 비슷한 <b>Grok</b>(끝이 k, x.ai)은 다른 회사이고 유료예요. 키 종류(Type)를 고르는 창이 나오면 잘못 들어간 거예요.</p>
     <ol class="steps-ol">
-      <li><a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq 키 페이지 열기</a> → 본인 구글 또는 GitHub 계정으로 로그인</li>
-      <li><b>Create API Key</b> → 이름은 아무거나(예: workbook) → 만들어진 키(<b>gsk_</b>로 시작) 복사 — 이 화면을 닫으면 다시 볼 수 없어요</li>
+      <li><a href="https://groq.com" target="_blank" rel="noopener">Groq 공식 페이지(groq.com) 열기</a> → 오른쪽 위 <b>Start Building</b>(또는 <b>Dev Console</b>)</li>
+      <li>구글 또는 GitHub 계정으로 로그인</li>
+      <li>왼쪽(또는 위) 메뉴 <b>API Keys</b> → <b>Create API Key</b> → 이름은 아무거나(예: workbook) → <b>Submit</b></li>
+      <li>만들어진 키(<b>gsk_</b>로 시작) 복사 — 이 화면을 닫으면 다시 볼 수 없어요</li>
       <li>아래 칸에 붙여 넣고 <b>확인하고 저장</b></li>
     </ol>
     <input type="password" placeholder="gsk_…" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="API 키">

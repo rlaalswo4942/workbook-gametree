@@ -793,6 +793,8 @@ function boot() {
     e.preventDefault();
     const key = keyM.querySelector("input[type=password]").value.trim(), persist = keyM.querySelector("[data-persist]").checked;
     if (!key) return toast("키를 붙여 넣어 주세요");
+    if (/^xai-/i.test(key)) return toast("Grok(x.ai) 키예요. Groq(groq.com)에서 gsk_로 시작하는 키를 받아 주세요");
+    if (!/^gsk_/.test(key)) return toast("Groq 키는 gsk_로 시작해요. groq.com에서 받은 키인지 확인해 주세요");
     const probe = { key, model: ai.model }, btn = keyM.querySelector("[type=submit]");
     ai.checking = true; paintKey(); btn.disabled = true;
     try {
