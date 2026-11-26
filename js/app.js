@@ -924,7 +924,6 @@ function boot() {
     toast(`✓ 실험 완료: ${LABS[n.k].auto.find(([k]) => k === key)[1]}`);
     const p = progress(itemsOf(n)); if (!was && p.done === p.total) celebrate(n);
   }
-  function setVal(key, value, refresh = true) { const n = curNode(); if (!n || cur.mode === "share") return; n.vals[key] = value; saveNode(n); if (refresh) refreshPage(); }
   function pushVal(key, value) { const n = curNode(); if (!n || cur.mode === "share") return; const a = (n.vals[key] || []).filter((x) => x !== value); a.push(value); n.vals[key] = a.slice(-12); saveNode(n); refreshPage(); }
   function celebrate(n) {
     toast(`미션 ${n.k} 완료! ${n.k < 6 ? "아래 '다음 미션'에서 연관 검색어를 골라요" : "6개 미션을 모두 끝냈어요"}`);
